@@ -71,9 +71,9 @@ static const char gHashSet_statusMsg[gHashSet_status_Cnt][MAX_MSG_LEN] = {
 /**
  * @brief macro that checks if objPool status is OK and convers error code to compatible gHashSet_status otherwize
  */
-#define GHASHSET_CHECK_POOL(status) ({                             \
+#define GHASHSET_CHECK_POOL(status) ({                                 \
     if ((status) != gObjPool_status_OK)                                 \
-        GHASHSET_ASSERT_LOG(false, (gHashSet_status)status);  \
+        GHASHSET_ASSERT_LOG(false, (gHashSet_status)status);             \
 })
 
 
@@ -83,17 +83,17 @@ static const char gHashSet_statusMsg[gHashSet_status_Cnt][MAX_MSG_LEN] = {
 #ifndef NLOGS
 /*
 #define GHASHSET_ASSERT_LOG(expr, errCode, logStream) ({                                                  \
-    if (!(expr)) {                                                                                      \
+    if (!(expr)) {                                                                                         \
         fprintf((logStream),  "%s in %s on line %d!\n", gHashSet_statusMsg[(errCode)], __func__, __LINE__); \
         return (gHashSet_status)(errCode);                                                                   \
-    }                                                                                                      \
+    }                                                                                                         \
 })
 */
-#define GHASHSET_ASSERT_LOG(expr, errCode) ({                                                  \
-    if (!(expr)) {                                                                                      \
-        fprintf((ctx->logStream),  "%s in %s on line %d!\n", gHashSet_statusMsg[(errCode)], __func__, __LINE__); \
-        return (gHashSet_status)(errCode);                                                                   \
-    }                                                                                                      \
+#define GHASHSET_ASSERT_LOG(expr, errCode) ({                                                                   \
+    if (!(expr)) {                                                                                               \
+        fprintf((ctx->logStream),  "%s in %s on line %d!\n", gHashSet_statusMsg[(errCode)], __func__, __LINE__);  \
+        return (gHashSet_status)(errCode);                                                                         \
+    }                                                                                                               \
 })
 #else
 #define GHASHSET_ASSERT_LOG(...)
@@ -103,7 +103,7 @@ static const char gHashSet_statusMsg[gHashSet_status_Cnt][MAX_MSG_LEN] = {
 /**
  * @brief Macro for easier and more secure node access in gObjPool
  */
-#define GHASHSET_NODE_BY_ID(id) ({                                     \
+#define GHASHSET_NODE_BY_ID(id) ({                                  \
     gList_Node *node;                                                \
     GHASHSET_CHECK_POOL(gObjPool_get(ctx->list->pool, id, &node));    \
     node;                                                              \
@@ -113,9 +113,9 @@ static const char gHashSet_statusMsg[gHashSet_status_Cnt][MAX_MSG_LEN] = {
 /**
  * @brief Macro for handy and secure allocation
  */
-#define GHASHSET_POOL_ALLOC() ({                                                                      \
+#define GHASHSET_POOL_ALLOC() ({                                                                   \
     size_t macroId = -1;                                                                            \
-    gHashSet_Node *macroNode = NULL;                                                                    \
+    gHashSet_Node *macroNode = NULL;                                                                 \
     GHASHSET_CHECK_POOL(gObjPool_alloc(ctx->list->pool, &macroId));                                   \
     GHASHSET_CHECK_POOL(gObjPool_get(ctx->list->pool, macroId, &macroNode));                           \
     macroNode->sibling = -1;                                                                            \
@@ -129,7 +129,7 @@ static const char gHashSet_statusMsg[gHashSet_status_Cnt][MAX_MSG_LEN] = {
  * @brief Macro for handy and secure deallocation
  */
 #define GHASHSET_POOL_FREE(id) ({                                                            \
-    GHASHSET_CHECK_POOL(gObjPool_free(ctx->list->pool, id));                               \
+    GHASHSET_CHECK_POOL(gObjPool_free(ctx->list->pool, id));                                  \
 })
 
 
@@ -138,33 +138,27 @@ static const char gHashSet_statusMsg[gHashSet_status_Cnt][MAX_MSG_LEN] = {
  */
 #define GHASHSET_IS_OK(expr) ({                                                      \
     gHashSet_status macroStatus = (expr);                                             \
-    GHASHSET_ASSERT_LOG(macroStatus == gHashSet_status_OK, macroStatus); \
+    GHASHSET_ASSERT_LOG(macroStatus == gHashSet_status_OK, macroStatus);               \
 })
 
 /**
  * @brief Macro to check if expression or status is OK
  */
 #define GHASHSET_LIST_OK(expr) ({                                                      \
-    gList_status macroStatus = (expr);                                             \
-    GHASHSET_ASSERT_LOG(macroStatus == gList_status_OK, macroStatus); \
+    gList_status macroStatus = (expr);                                                  \
+    GHASHSET_ASSERT_LOG(macroStatus == gList_status_OK, macroStatus);                    \
 })
 
 #define GHASHSET_ID_VAL(id) GHASHSET_ASSERT_LOG(gObjPool_idValid(ctx->list->pool, id), gHashSet_status_BadId)
 
-#define GHASHSET_SELF_CHECK(ctx) ({ \
-    if (!(gPtrValid(ctx))) {                                                                                                \
-        fprintf(stderr,  "%s in %s on line %d!\n", gHashSet_statusMsg[gHashSet_status_BadStructPtr], __func__, __LINE__);   \
-        return gHashSet_status_BadStructPtr;                                                                                  \
-    }                                                                                                                       \
-    GHASHSET_ASSERT_LOG(ctx->capacity != 0 && ctx->size <= ctx->capacity, gHashSet_status_BadCapacity);                     \
+#define GHASHSET_SELF_CHECK(ctx) ({                                                                                 \
+    ASSERT_LOG(gPtrValid(ctx), gHashSet_status_BadStructPtr,                                                         \
+                gHashSet_statusMsg[gHashSet_status_BadStructPtr], stderr);                                            \
+    ASSERT_LOG((ctx->capacity != 0 && ctx->capacity != -1 && ctx->size <= ctx->capacity), gHashSet_status_BadCapacity, \
+                gHashSet_statusMsg[gHashSet_status_BadCapacity], stderr);                                               \
 })
 
-/**
- * @brief gHashSet constructor that initiates objPool and logStream and creates zero node
- * @param ctx pointer to structure to construct on
- * @param newLogStream new log stream, could be `NULL`, then logs will be written to `stderr`
- * @return gHashSet status code
- */
+
 static gHashSet_status gHashSet_ctor(gHashSet *ctx, size_t capacity, FILE *newLogStream)
 {
     if (!gPtrValid(ctx)) {
@@ -173,7 +167,7 @@ static gHashSet_status gHashSet_ctor(gHashSet *ctx, size_t capacity, FILE *newLo
             out = stderr;
         else
             out = newLogStream;
-        GHASHSET_ASSERT_LOG(false, gHashSet_status_BadStructPtr);;
+        ASSERT_LOG(false, gHashSet_status_BadStructPtr, gHashSet_statusMsg[gHashSet_status_BadStructPtr], out);
     }
 
     ctx->logStream = stderr;
@@ -185,9 +179,6 @@ static gHashSet_status gHashSet_ctor(gHashSet *ctx, size_t capacity, FILE *newLo
     ctx->table = (size_t*)calloc(capacity, sizeof(size_t));
     GHASHSET_ASSERT_LOG(ctx->table != NULL, gHashSet_status_AllocErr);
     memset(ctx->table, 0xFF, capacity * sizeof(size_t));
-    assert(ctx->table[0] == -1);    //TODO
-    assert(ctx->table[1] == -1);
-    assert(ctx->table[2] == -1);
     ctx->capacity = capacity;
     ctx->size = 0;
 
