@@ -29,7 +29,6 @@ endif()
 FetchContent_Declare(
   gobjpool
   GIT_REPOSITORY https://github.com/Lord-KA/gObjPool.git
-  GIT_TAG        release-1.0.2
 )
 if(NOT gobjpool_POPULATED)
   FetchContent_Populate(gobjpool)
@@ -39,7 +38,6 @@ endif()
 FetchContent_Declare(
   glist
   GIT_REPOSITORY https://github.com/Lord-KA/gList.git
-  # GIT_TAG        release-1.0.2
 )
 if(NOT glist_POPULATED)
   FetchContent_Populate(glist)

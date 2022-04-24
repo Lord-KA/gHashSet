@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+
 #include "hashfuncs.h"
 
 
-static const size_t MAX_KEY_LEN = 72;      // This way sizeof(gObjPool_Node) == 128
+static const size_t MAX_KEY_LEN = 64;      // This way sizeof(gObjPool_Node) == 128
 
 typedef struct {
     size_t hash;
@@ -83,14 +85,6 @@ static const char gHashSet_statusMsg[gHashSet_status_Cnt][MAX_MSG_LEN] = {
  * @brief Local version of ASSERT_LOG macro
  */
 #ifndef NLOGS
-/*
-#define GHASHSET_ASSERT_LOG(expr, errCode, logStream) ({                                                  \
-    if (!(expr)) {                                                                                         \
-        fprintf((logStream),  "%s in %s on line %d!\n", gHashSet_statusMsg[(errCode)], __func__, __LINE__); \
-        return (gHashSet_status)(errCode);                                                                   \
-    }                                                                                                         \
-})
-*/
 #define GHASHSET_ASSERT_LOG(expr, errCode) ({                                                                   \
     if (!(expr)) {                                                                                               \
         fprintf((ctx->logStream),  "%s in %s on line %d!\n", gHashSet_statusMsg[(errCode)], __func__, __LINE__);  \
@@ -106,20 +100,17 @@ static const char gHashSet_statusMsg[gHashSet_status_Cnt][MAX_MSG_LEN] = {
  * @brief Macro for easier and more secure node access in gObjPool
  */
 #define GHASHSET_NODE_BY_ID(id) ({                                  \
-    gList_Node *node;                                                \
-    GHASHSET_CHECK_POOL(gObjPool_get(ctx->list->pool, id, &node));    \
-    node;                                                              \
+    GHASHSET_ID_VAL(id);                                            \
+    &(ctx->list->pool->data[id].val);                               \
 })
-
 
 /**
  * @brief Macro for handy and secure allocation
  */
 #define GHASHSET_POOL_ALLOC() ({                                                                   \
     size_t macroId = -1;                                                                            \
-    gHashSet_Node *macroNode = NULL;                                                                 \
-    GHASHSET_CHECK_POOL(gObjPool_alloc(ctx->list->pool, &macroId));                                   \
-    GHASHSET_CHECK_POOL(gObjPool_get(ctx->list->pool, macroId, &macroNode));                           \
+    GHASHSET_CHECK_POOL(gObjPool_alloc(ctx->list->pool, &macroId));                                  \
+    gHashSet_Node *macroNode = GHASHSET_NODE_BY_ID(macroId);                                          \
     macroNode->sibling = -1;                                                                            \
     macroNode->parent  = -1;                                                                             \
     macroNode->child   = -1;                                                                              \
@@ -151,7 +142,11 @@ static const char gHashSet_statusMsg[gHashSet_status_Cnt][MAX_MSG_LEN] = {
     GHASHSET_ASSERT_LOG(macroStatus == gList_status_OK, macroStatus);                    \
 })
 
+#ifndef NDEBUG
 #define GHASHSET_ID_VAL(id) GHASHSET_ASSERT_LOG(gObjPool_idValid(ctx->list->pool, id), gHashSet_status_BadId)
+#else
+#define GHASHSET_ID_VAL(...)
+#endif
 
 #define GHASHSET_SELF_CHECK(ctx) ({                                                                                 \
     ASSERT_LOG(gPtrValid(ctx), gHashSet_status_BadStructPtr,                                                         \
@@ -230,7 +225,7 @@ static gHashSet_status gHashSet_insert(gHashSet *ctx, char *key, char *value)
     return gHashSet_status_OK;
 }
 
-static gHashSet_status gHashSet_find(gHashSet *ctx, char *key, char **value_out)
+inline static gHashSet_status gHashSet_find(gHashSet *ctx, char *key, char **value_out)
 {
     GHASHSET_SELF_CHECK(ctx);
 
@@ -247,7 +242,7 @@ static gHashSet_status gHashSet_find(gHashSet *ctx, char *key, char **value_out)
 
     size_t curId = ctx->table[hash];
     gList_Node *node = GHASHSET_NODE_BY_ID(curId);
-    while (curId != ctx->list->zero && strncmp(node->data.key, key, MAX_KEY_LEN)) {
+    while (curId != ctx->list->zero && ((uint64_t)(*key) != (uint64_t)(node->data.key))) {
         curId = node->next;
         node = GHASHSET_NODE_BY_ID(curId);
     }
