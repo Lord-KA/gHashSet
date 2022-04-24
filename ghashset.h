@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "hashfuncs.h"
 
 
-static const size_t MAX_KEY_LEN = 100;      // This way sizeof(gObjPool_Node) == 128
+static const size_t MAX_KEY_LEN = 72;      // This way sizeof(gObjPool_Node) == 128
 
 typedef struct {
+    size_t hash;
     char key[MAX_KEY_LEN];
     char *value;
 } gHashSet_Node;
@@ -14,14 +16,14 @@ typedef struct {
 
 #include "glist.h"
 
-#define GHASHSET_HASH(hash, x) hash + x
+#define GHASHSET_HASH(hash, x) hash_sum(hash, x)
 
 typedef struct {
-    gList *list;
+    gList  *list;
     size_t *table;
-    size_t capacity;
-    size_t size;
-    FILE *logStream;
+    size_t  capacity;
+    size_t  size;
+    FILE   *logStream;
 } gHashSet;
 
 /**
@@ -169,6 +171,7 @@ static gHashSet_status gHashSet_ctor(gHashSet *ctx, size_t capacity, FILE *newLo
             out = newLogStream;
         ASSERT_LOG(false, gHashSet_status_BadStructPtr, gHashSet_statusMsg[gHashSet_status_BadStructPtr], out);
     }
+    assert(sizeof(gObjPool_Node) == 128);
 
     ctx->logStream = stderr;
     if (gPtrValid(newLogStream))
@@ -210,7 +213,6 @@ static gHashSet_status gHashSet_insert(gHashSet *ctx, char *key, char *value)
         hash = GHASHSET_HASH(hash, *(iter++));
     hash %= ctx->capacity;
 
-    fprintf(stderr, "hash = %zu\n", hash);
     size_t lastId = -1;
     if (ctx->table[hash] == -1)
         lastId = GHASHSET_NODE_BY_ID(ctx->list->zero)->prev;
@@ -219,6 +221,7 @@ static gHashSet_status gHashSet_insert(gHashSet *ctx, char *key, char *value)
 
     gHashSet_Node node = {};
     node.value = value;
+    node.hash = hash;
     strncpy(node.key, key, MAX_KEY_LEN - 1);
 
     GHASHSET_LIST_OK(gList_insertByNode(ctx->list, lastId, node));
@@ -300,5 +303,36 @@ static gHashSet_status gHashSet_print(gHashSet *ctx, FILE *out)
         fprintf(out, "id = %zu | $%s$ | $%s$\n", node->id, node->data.key, node->data.value);
     } while (node->id != ctx->list->zero);
 
+    return gHashSet_status_OK;
+}
+
+static gHashSet_status gHashSet_statistics(gHashSet *ctx, FILE *out)
+{
+    GHASHSET_SELF_CHECK(ctx);
+    fprintf(stderr, "gHashSet statistics report:\n");
+    size_t *data = (size_t*)calloc(ctx->capacity, sizeof(data));
+    size_t curId = ctx->list->zero;
+    GHASHSET_LIST_OK(gList_getNextId(ctx->list, curId, &curId));
+    size_t cnt = 0;
+    while (curId != ctx->list->zero) {
+        gList_Node *node = GHASHSET_NODE_BY_ID(curId);
+        ++data[node->data.hash];
+        curId = node->next;
+        ++cnt;
+    }
+
+    size_t min = -1;
+    size_t max = 0;
+    size_t avg = 0;
+    for (size_t i = 0; i < ctx->capacity; ++i) {
+        min = (min > data[i]) ? data[i] : min;
+        max = (max < data[i]) ? data[i] : max;
+        avg += data[i];
+        fprintf(out, "%zu\n", data[i]);
+    }
+    avg /= ctx->capacity;
+    fprintf(stderr, "min = %zu\nmax = %zu\nagv = %zu\noverall = %zu\n", min, max, avg, cnt);
+
+    free(data);
     return gHashSet_status_OK;
 }
