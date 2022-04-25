@@ -1,0 +1,396 @@
+--------------------------------------------------------------------------------
+Profile data file 'callgrind.out.12673' (creator: callgrind-3.18.1)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 2373637136
+Trigger: Program termination
+Profiled target:  ./benchmark (PID 12673, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                      
+--------------------------------------------------------------------------------
+13,670,734,880 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                      file:function
+--------------------------------------------------------------------------------
+5,812,536,004 (42.52%)  /home/user/Documents/MIPT/Ded/hashset/ghashset.h:gHashSet_find(gHashSet*, char*, char**) [/home/user/Documents/MIPT/Ded/hashset/build/benchmark]
+4,931,462,000 (36.07%)  ???:__strncmp_avx2 [/usr/lib/libc.so.6]
+2,876,621,632 (21.04%)  _deps/gobjpool-src/gobjpool.h:gObjPool_get(gObjPool const*, unsigned long, gList_Node**) [/home/user/Documents/MIPT/Ded/hashset/build/benchmark]
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: _deps/gobjpool-src/gobjpool.h
+--------------------------------------------------------------------------------
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@ WARNING @@ WARNING @@ WARNING @@ WARNING @@ WARNING @@ WARNING @@ WARNING @@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@ Source file '_deps/gobjpool-src/gobjpool.h' is more recent than input file 'callgrind.out.12673'.
+@ Annotations may not be correct.
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+Ir                     
+
+-- line 79 ----------------------------------------
+            .           /**
+            .            * @brief gObjPool constructor
+            .            * @param pool pointer to structure to construc onto
+            .            * @param newCapacity starting capacity, could be -1, than START_CAPACITY is used
+            .            * @prarm newLogStream stream for logs, if NULL, than `stderr`
+            .            * @return gObjPool status code
+            .            */
+            .           gObjPool_status gObjPool_ctor(gObjPool *pool, size_t newCapacity, FILE *newLogStream)
+            6 ( 0.00%)  {
+            6 ( 0.00%)      if (!gPtrValid(pool)) {
+            8 ( 0.00%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/gutils-src/gutils.h:gPtrValid(void const*) (1x)
+            .                   FILE *out;
+            .                   if (!gPtrValid(newLogStream))
+            .                       out = stderr;
+            .                   else
+            .                       out = newLogStream;
+            .                   fprintf(out, "ERROR: bad structure ptr provided to ctor!\n");
+            .                   return gObjPool_status_BadStructPtr;
+            .               }
+            .           
+            4 ( 0.00%)      if (newCapacity == -1 || newCapacity == 0)
+            .                   pool->capacity = GOBJPOOL_START_CAPACITY;
+            .               else
+            3 ( 0.00%)          pool->capacity = newCapacity;
+            .           
+            6 ( 0.00%)      if (!gPtrValid(newLogStream))
+            8 ( 0.00%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/gutils-src/gutils.h:gPtrValid(void const*) (1x)
+            .                   pool->logStream = stderr;
+            .               else
+            3 ( 0.00%)          pool->logStream = newLogStream;
+            .           
+            9 ( 0.00%)      pool->data = (gObjPool_Node*)calloc(pool->capacity, sizeof(gObjPool_Node));
+       32,246 ( 0.00%)  => ???:calloc (1x)
+            4 ( 0.00%)      if (pool->data == NULL) {
+            .                   pool->capacity  = -1;
+            .                   pool->last_free = -1;
+            .                   GOBJPOOL_ASSERT_LOG(false, gObjPool_status_AllocErr);
+            .               }
+            .           
+        1,501 ( 0.00%)      for (size_t i = 0; i < pool->capacity - 1; ++i) {
+        1,992 ( 0.00%)          pool->data[i].next = i + 1;
+        1,494 ( 0.00%)          pool->data[i].allocated = false;
+            .               }
+            8 ( 0.00%)      pool->data[pool->capacity - 1].next = -1;
+            8 ( 0.00%)      pool->data[pool->capacity - 1].allocated = false;
+            .           
+            2 ( 0.00%)      pool->last_free = 0;
+            1 ( 0.00%)      return gObjPool_status_OK;
+            2 ( 0.00%)  }
+            .           
+            .           
+            .           /**
+            .            * @brief gObjPool destructor
+            .            * @param pool pointer to structure to destruct
+            .            * @return gObjPool status code
+            .            */
+            .           gObjPool_status gObjPool_dtor(gObjPool *pool)
+            4 ( 0.00%)  {
+            .               ASSERT_LOG(gPtrValid(pool), gObjPool_status_BadStructPtr, "ERROR: bad structure ptr provided to dtor!\n", stderr);
+            5 ( 0.00%)      free(pool->data);
+           66 ( 0.00%)  => ???:free (1x)
+            2 ( 0.00%)      pool->data       = NULL;
+            2 ( 0.00%)      pool->capacity   = -1;
+            2 ( 0.00%)      pool-> last_free = -1;
+            1 ( 0.00%)      return gObjPool_status_OK;
+            2 ( 0.00%)  }
+            .           
+            .           
+            .           /**
+            .            * @brief expands pool if no free elements
+            .            * @param pool pointer to gObjPool structure
+            .            * @return gObjPool status code
+            .            */
+            .           gObjPool_status gObjPool_refit(gObjPool *pool)
+       13,632 ( 0.00%)  {
+            .               ASSERT_LOG(gPtrValid(pool), gObjPool_status_BadStructPtr, "ERROR: bad structure ptr provided to refit!\n", stderr);
+       13,632 ( 0.00%)      if (pool->last_free != -1)
+        6,808 ( 0.00%)          return gObjPool_status_OK;
+            .           
+            .               GOBJPOOL_ASSERT_LOG(pool->capacity != -1, gObjPool_status_BadCapacity);
+            .           
+           16 ( 0.00%)      size_t newCapacity = pool->capacity * GOBJPOOL_CAPACITY_EXPND_FACTOR;
+           44 ( 0.00%)      gObjPool_Node *newData = (gObjPool_Node*)realloc(pool->data, newCapacity * sizeof(gObjPool_Node));
+      161,569 ( 0.00%)  => ???:realloc (4x)
+          781 ( 0.00%)  => ???:_dl_runtime_resolve_xsave (1x)
+            .               GOBJPOOL_ASSERT_LOG(newData != NULL, gObjPool_status_AllocErr);
+            .           
+           12 ( 0.00%)      pool->data = newData;
+           12 ( 0.00%)      pool->capacity = newCapacity;
+       22,516 ( 0.00%)      for (size_t i = pool->capacity / 2; i < pool->capacity - 1; ++i) {
+       29,968 ( 0.00%)          pool->data[i].next = i + 1;
+       22,476 ( 0.00%)          pool->data[i].allocated = false;
+            .               }
+           32 ( 0.00%)      pool->data[pool->capacity - 1].next = -1;
+           32 ( 0.00%)      pool->data[pool->capacity - 1].allocated = false;
+           24 ( 0.00%)      pool->last_free = pool->capacity / 2;
+            .           
+            4 ( 0.00%)      return gObjPool_status_OK;
+        6,816 ( 0.00%)  }
+            .           
+            .           
+            .           /**
+            .            * @brief allocate element from the pool
+            .            * @param pool pointer to gObjPool structure
+            .            * @param result_id pointer to write id of the allocated node to
+            .            * @return gObjPool status code
+            .            */
+            .           gObjPool_status gObjPool_alloc(gObjPool *pool, size_t *result_id)
+       17,040 ( 0.00%)  {
+            .               ASSERT_LOG(gPtrValid(pool), gObjPool_status_BadStructPtr, "ERROR: bad structure ptr provided to alloc!\n", stderr);
+       17,040 ( 0.00%)      pool->status = gObjPool_refit(pool);
+      278,374 ( 0.00%)  => _deps/gobjpool-src/gobjpool.h:gObjPool_refit(gObjPool*) (3,408x)
+       13,632 ( 0.00%)      if (pool->status != gObjPool_status_OK)
+            .                   return pool->status;
+            .           
+       23,856 ( 0.00%)      pool->data[pool->last_free].allocated = true;
+            .           
+       13,632 ( 0.00%)      *result_id = pool->last_free;
+       30,672 ( 0.00%)      pool->last_free = pool->data[pool->last_free].next;
+            .           
+            .           
+        3,408 ( 0.00%)      return gObjPool_status_OK;
+        6,816 ( 0.00%)  }
+            .           
+            .           
+            .           /**
+            .            * @brief free element to the pool
+            .            * @param pool pointer to gObjPool structure
+            .            * @param id id of a node to free
+            .            * @return gObjPool status code
+            .            */
+-- line 202 ----------------------------------------
+-- line 218 ----------------------------------------
+            .           /**
+            .            * @brief get element from the pool
+            .            * @param pool pointer to gObjPool structure
+            .            * @param id id of the desired node
+            .            * @param returnPtr pointer to write write pointer to the data
+            .            * @return gObjPool status code
+            .            */
+            .           static gObjPool_status gObjPool_get(const gObjPool *pool, const size_t id, GOBJPOOL_TYPE **returnPtr)
+  898,944,260 ( 6.58%)  {
+            .               ASSERT_LOG(gPtrValid(pool), gObjPool_status_BadStructPtr, "ERROR: bad structure ptr provided to get!\n", stderr);
+            .           
+            .               GOBJPOOL_ASSERT_LOG((id <= pool->capacity && (pool->data[id].allocated)), gObjPool_status_BadId);
+            .           
+1,438,310,816 (10.52%)      *returnPtr = &pool->data[id].val;
+            .           
+  179,788,852 ( 1.32%)      return gObjPool_status_OK;
+  359,577,704 ( 2.63%)  }
+            .           
+            .           /**
+            .            * @brief gets id of a node by pointer to data
+            .            * @param pool pointer to gObjPool structure
+            .            * @param ptr pointer to data of the desired node
+            .            * @param id pointer to write the id to
+            .            * @return gObjPool status code
+            .            */
+-- line 242 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: /home/user/Documents/MIPT/Ded/hashset/ghashset.h
+--------------------------------------------------------------------------------
+Ir                     
+
+-- line 157 ----------------------------------------
+            .               ASSERT_LOG(gPtrValid(ctx), gHashSet_status_BadStructPtr,                                                         \
+            .                           gHashSet_statusMsg[gHashSet_status_BadStructPtr], stderr);                                            \
+            .               ASSERT_LOG((ctx->capacity != 0 && ctx->capacity != -1 && ctx->size <= ctx->capacity), gHashSet_status_BadCapacity, \
+            .                           gHashSet_statusMsg[gHashSet_status_BadCapacity], stderr);                                               \
+            .           })
+            .           
+            .           
+            .           static gHashSet_status gHashSet_ctor(gHashSet *ctx, size_t capacity, FILE *newLogStream)
+            6 ( 0.00%)  {
+            6 ( 0.00%)      if (!gPtrValid(ctx)) {
+            8 ( 0.00%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/gutils-src/gutils.h:gPtrValid(void const*) (1x)
+            .                   FILE *out;
+            .                   if (!gPtrValid(newLogStream))
+            .                       out = stderr;
+            .                   else
+            .                       out = newLogStream;
+            .                   ASSERT_LOG(false, gHashSet_status_BadStructPtr, gHashSet_statusMsg[gHashSet_status_BadStructPtr], out);
+            .               }
+            .               assert(sizeof(gObjPool_Node) == 128);
+            .           
+            3 ( 0.00%)      ctx->logStream = stderr;
+            5 ( 0.00%)      if (gPtrValid(newLogStream))
+            9 ( 0.00%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/gutils-src/gutils.h:gPtrValid(void const*) (1x)
+            .                   ctx->logStream = newLogStream;
+            .           
+            8 ( 0.00%)      ctx->list = gList_new(ctx->logStream, capacity);
+       38,790 ( 0.00%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/glist-src/glist.h:gList_new(_IO_FILE*, unsigned long) (1x)
+            4 ( 0.00%)      GHASHSET_ASSERT_LOG(ctx->list != NULL, gHashSet_status_AllocErr);
+            8 ( 0.00%)      ctx->table = (size_t*)calloc(capacity, sizeof(size_t));
+          348 ( 0.00%)  => ???:calloc (1x)
+            4 ( 0.00%)      GHASHSET_ASSERT_LOG(ctx->table != NULL, gHashSet_status_AllocErr);
+           12 ( 0.00%)      memset(ctx->table, 0xFF, capacity * sizeof(size_t));
+          865 ( 0.00%)  => ???:_dl_runtime_resolve_xsave (1x)
+          127 ( 0.00%)  => ???:__memset_avx2_unaligned_erms (1x)
+            3 ( 0.00%)      ctx->capacity = capacity;
+            2 ( 0.00%)      ctx->size = 0;
+            .           
+            1 ( 0.00%)      return gHashSet_status_OK;
+            2 ( 0.00%)  }
+            .           
+            .           static gHashSet_status gHashSet_dtor(gHashSet *ctx)
+            4 ( 0.00%)  {
+            .               GHASHSET_SELF_CHECK(ctx);
+            .           
+            5 ( 0.00%)      free(ctx->table);
+          160 ( 0.00%)  => ???:free (1x)
+            6 ( 0.00%)      ctx->list = gList_delete(ctx->list);
+          353 ( 0.00%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/glist-src/glist.h:gList_delete(gList*) (1x)
+            4 ( 0.00%)      if (ctx->list != NULL)
+            .                   fprintf(ctx->logStream, "Failed to delete list!\n");
+            2 ( 0.00%)      ctx->capacity = -1;
+            2 ( 0.00%)      ctx->size = -1;
+            2 ( 0.00%)      ctx->table = NULL;
+            .           
+            1 ( 0.00%)      return gHashSet_status_OK;
+            2 ( 0.00%)  }
+            .           
+            .           static gHashSet_status gHashSet_insert(gHashSet *ctx, char *key, char *value)
+       30,663 ( 0.00%)  {
+            .               GHASHSET_SELF_CHECK(ctx);
+            .           
+        3,407 ( 0.00%)      size_t hash = 0;
+        6,814 ( 0.00%)      char *iter = key;
+      512,315 ( 0.00%)      while (*iter != 0)
+    1,238,200 ( 0.01%)          hash = GHASHSET_HASH(hash, *(iter++));
+    1,238,200 ( 0.01%)  => /home/user/Documents/MIPT/Ded/hashset/hashfuncs.h:hash_sum(unsigned long, char) (123,820x)
+       20,442 ( 0.00%)      hash %= ctx->capacity;
+            .           
+        3,407 ( 0.00%)      size_t lastId = -1;
+       27,256 ( 0.00%)      if (ctx->table[hash] == -1)
+        4,500 ( 0.00%)          lastId = GHASHSET_NODE_BY_ID(ctx->list->zero)->prev;
+        4,000 ( 0.00%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/gobjpool-src/gobjpool.h:gObjPool_get(gObjPool const*, unsigned long, gList_Node**) (250x)
+            .               else
+       63,140 ( 0.00%)          lastId = GHASHSET_NODE_BY_ID(ctx->table[hash])->prev;
+       50,512 ( 0.00%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/gobjpool-src/gobjpool.h:gObjPool_get(gObjPool const*, unsigned long, gList_Node**) (3,157x)
+            .           
+       54,512 ( 0.00%)      gHashSet_Node node = {};
+        6,814 ( 0.00%)      node.value = value;
+        6,814 ( 0.00%)      node.hash = hash;
+       27,260 ( 0.00%)      strncpy(node.key, key, MAX_KEY_LEN - 1);
+      204,152 ( 0.00%)  => ???:__strncpy_avx2 (3,407x)
+          845 ( 0.00%)  => ???:_dl_runtime_resolve_xsave (1x)
+            .           
+       74,954 ( 0.00%)      GHASHSET_LIST_OK(gList_insertByNode(ctx->list, lastId, node));
+    1,072,193 ( 0.01%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/glist-src/glist.h:gList_insertByNode(gList*, unsigned long, gHashSet_Node) (3,407x)
+       68,140 ( 0.00%)      ctx->table[hash] = GHASHSET_NODE_BY_ID(lastId)->next;
+       54,512 ( 0.00%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/gobjpool-src/gobjpool.h:gObjPool_get(gObjPool const*, unsigned long, gList_Node**) (3,407x)
+            .           
+        3,407 ( 0.00%)      return gHashSet_status_OK;
+       17,035 ( 0.00%)  }
+            .           
+            .           static gHashSet_status gHashSet_find(gHashSet *ctx, char *key, char **value_out)
+      900,000 ( 0.01%)  {
+            .               GHASHSET_SELF_CHECK(ctx);
+            .           
+      100,000 ( 0.00%)      size_t hash = 0;
+      200,000 ( 0.00%)      char *iter = key;
+   16,516,000 ( 0.12%)      while (*iter != 0)
+   40,040,000 ( 0.29%)          hash = GHASHSET_HASH(hash, *(iter++));
+   40,040,000 ( 0.29%)  => /home/user/Documents/MIPT/Ded/hashset/hashfuncs.h:hash_sum(unsigned long, char) (4,004,000x)
+      600,000 ( 0.00%)      hash %= ctx->capacity;
+            .           
+      800,000 ( 0.01%)      if (ctx->table[hash] == -1) {
+            .                   *value_out = NULL;
+            .                   return gHashSet_status_OK;
+            .               }
+            .           
+      700,000 ( 0.01%)      size_t curId = ctx->table[hash];
+    1,400,000 ( 0.01%)      gList_Node *node = GHASHSET_NODE_BY_ID(curId);
+    1,600,000 ( 0.01%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/gobjpool-src/gobjpool.h:gObjPool_get(gObjPool const*, unsigned long, gList_Node**) (100,000x)
+2,695,575,004 (19.72%)      while (curId != ctx->list->zero && strncmp(node->data.key, key, MAX_KEY_LEN)) {
+4,931,462,000 (36.07%)  => ???:__strncmp_avx2 (179,665,000x)
+          801 ( 0.00%)  => ???:_dl_runtime_resolve_xsave (1x)
+  538,995,000 ( 3.94%)          curId = node->next;
+2,515,310,000 (18.40%)          node = GHASHSET_NODE_BY_ID(curId);
+2,874,640,000 (21.03%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/gobjpool-src/gobjpool.h:gObjPool_get(gObjPool const*, unsigned long, gList_Node**) (179,665,000x)
+            .               }
+            .           
+      500,000 ( 0.00%)      if (curId == ctx->list->zero)
+      300,000 ( 0.00%)          *value_out = NULL;
+            .               else
+            .                   *value_out = node->data.value;
+            .           
+      100,000 ( 0.00%)      return gHashSet_status_OK;
+      500,000 ( 0.00%)  }
+            .           
+            .           static gHashSet_status gHashSet_erase(gHashSet *ctx, char *key)
+            .           {
+            .               GHASHSET_SELF_CHECK(ctx);
+            .           
+            .               size_t hash = 0;
+            .               char *iter = key;
+            .               while (*iter != 0)
+-- line 269 ----------------------------------------
+-- line 302 ----------------------------------------
+            .                   GHASHSET_LIST_OK(gList_getNextNode(ctx->list, node->id, &node));
+            .                   fprintf(out, "id = %zu | $%s$ | $%s$\n", node->id, node->data.key, node->data.value);
+            .               } while (node->id != ctx->list->zero);
+            .           
+            .               return gHashSet_status_OK;
+            .           }
+            .           
+            .           static gHashSet_status gHashSet_statistics(gHashSet *ctx, FILE *out)
+            8 ( 0.00%)  {
+            .               GHASHSET_SELF_CHECK(ctx);
+           12 ( 0.00%)      fprintf(stderr, "gHashSet statistics report:\n");
+          780 ( 0.00%)  => ???:_dl_runtime_resolve_xsave (1x)
+          315 ( 0.00%)  => ???:fwrite (1x)
+            7 ( 0.00%)      size_t *data = (size_t*)calloc(ctx->capacity, sizeof(data));
+          604 ( 0.00%)  => ???:calloc (1x)
+            4 ( 0.00%)      size_t curId = ctx->list->zero;
+           10 ( 0.00%)      GHASHSET_LIST_OK(gList_getNextId(ctx->list, curId, &curId));
+           60 ( 0.00%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/glist-src/glist.h:gList_getNextId(gList const*, unsigned long, unsigned long*) (1x)
+            1 ( 0.00%)      size_t cnt = 0;
+       20,449 ( 0.00%)      while (curId != ctx->list->zero) {
+       47,698 ( 0.00%)          gList_Node *node = GHASHSET_NODE_BY_ID(curId);
+       54,512 ( 0.00%)  => /home/user/Documents/MIPT/Ded/hashset/build/_deps/gobjpool-src/gobjpool.h:gObjPool_get(gObjPool const*, unsigned long, gList_Node**) (3,407x)
+       27,256 ( 0.00%)          ++data[node->data.hash];
+       10,221 ( 0.00%)          curId = node->next;
+        3,407 ( 0.00%)          ++cnt;
+            .               }
+            .           
+            1 ( 0.00%)      size_t min = -1;
+            1 ( 0.00%)      size_t max = 0;
+            1 ( 0.00%)      size_t avg = 0;
+        1,256 ( 0.00%)      for (size_t i = 0; i < ctx->capacity; ++i) {
+        2,280 ( 0.00%)          min = (min > data[i]) ? data[i] : min;
+        2,270 ( 0.00%)          max = (max < data[i]) ? data[i] : max;
+        1,500 ( 0.00%)          avg += data[i];
+        3,004 ( 0.00%)          fprintf(out, "%zu\n", data[i]);
+      155,240 ( 0.00%)  => ???:fprintf (250x)
+          873 ( 0.00%)  => ???:_dl_runtime_resolve_xsave (1x)
+            .               }
+            6 ( 0.00%)      avg /= ctx->capacity;
+           12 ( 0.00%)      fprintf(stderr, "min = %zu\nmax = %zu\nagv = %zu\noverall = %zu\n", min, max, avg, cnt);
+        2,235 ( 0.00%)  => ???:fprintf (1x)
+            .           
+            8 ( 0.00%)      free(data);
+          887 ( 0.00%)  => ???:_dl_runtime_resolve_xsave (1x)
+          130 ( 0.00%)  => ???:free (1x)
+            1 ( 0.00%)      return gHashSet_status_OK;
+            5 ( 0.00%)  }
+
+--------------------------------------------------------------------------------
+Ir                     
+--------------------------------------------------------------------------------
+8,691,693,413 (63.58%)  events annotated
+
