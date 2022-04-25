@@ -8,7 +8,7 @@ int main()
     gHashSet *h = &hashset;
 
     gHashSet_ctor(h, 250, NULL);
-    FILE *inp = fopen("../War-And-Peace.txt", "r");
+    FILE *inp = fopen("../texts/War-And-Peace.txt", "r");
 
     size_t len = MAX_KEY_LEN / 10 + rand() % 60;
     size_t new_len = len;

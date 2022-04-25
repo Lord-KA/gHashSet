@@ -25,7 +25,7 @@ typedef struct {                            //TODO #pragma pac(push, 64)
 
 #include "glist.h"
 
-#define GHASHSET_HASH(hash, x) hash_one(hash, x)
+#define GHASHSET_HASH(hash, x) hash_rol(hash, x)
 
 typedef struct {
     gList  *list;
@@ -286,7 +286,6 @@ static gHashSet_status gHashSet_erase(gHashSet *ctx, char *key)
 
     size_t curId = ctx->table[hash];
     gList_Node *node = GHASHSET_NODE_BY_ID(curId);
-    fprintf(stderr, "curId = %zu | key = $%s$ | curKey = $%s$\n", curId, key, node->data.key); //TODO
     while (curId != ctx->list->zero && strncmp(node->data.key, key, MAX_KEY_LEN)) {
         curId = node->next;
         node = GHASHSET_NODE_BY_ID(curId);
@@ -340,7 +339,8 @@ static gHashSet_status gHashSet_statistics(gHashSet *ctx, FILE *out)
         min = (min > data[i]) ? data[i] : min;
         max = (max < data[i]) ? data[i] : max;
         avg += data[i];
-        fprintf(out, "%zu\n", data[i]);
+        if (gPtrValid(out))
+            fprintf(out, "%zu\n", data[i]);
     }
     avg /= ctx->capacity;
     fprintf(stderr, "min = %zu\nmax = %zu\nagv = %zu\noverall = %zu\n", min, max, avg, cnt);
