@@ -238,6 +238,7 @@ static gHashSet_status gHashSet_insert(gHashSet *ctx, char *key, char *value)
     return gHashSet_status_OK;
 }
 
+#ifdef __AVX512__
 inline static bool gHashSet_keyEq(char *one, char *other)
 {
     __m512i f = _mm512_load_epi64(one);
@@ -246,6 +247,7 @@ inline static bool gHashSet_keyEq(char *one, char *other)
     __mmask8 res = _mm512_cmpeq_epu64_mask(f, s);
     return res - 255;
 }
+#endif
 
 volatile inline static gHashSet_status gHashSet_find(gHashSet *ctx, char *key, char **value_out)
 {
@@ -264,7 +266,11 @@ volatile inline static gHashSet_status gHashSet_find(gHashSet *ctx, char *key, c
 
     size_t curId = ctx->table[hash];
     gList_Node *node = GHASHSET_NODE_BY_ID(curId);
-    while (curId != ctx->list->zero && memcmp(key, node->data.key, MAX_KEY_LEN)) { //gHashSet_keyEq(key, node->data.key)) {
+    #ifdef __AVX512__
+    while (curId != ctx->list->zero && gHashSet_keyEq(key, node->data.key)) {
+    #else
+    while (curId != ctx->list->zero && memcmp(key, node->data.key, MAX_KEY_LEN)) {
+    #endif
         curId = node->next;
         node = GHASHSET_NODE_BY_ID(curId);
     }
