@@ -1,3 +1,5 @@
+#define GHASHSET_HASH(hash, x) hash_rol_asm(hash, x)
+
 #include "ghashset.h"
 #include "gutils.h"
 #include "assert.h"

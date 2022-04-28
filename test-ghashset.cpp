@@ -52,6 +52,7 @@ TEST(manual, basics)
     EXPECT_STREQ(res2, "five");
     printf("$%s$\n", res2);
     gHashSet_print(h, stdout);
+    gHashSet_statistics(h, NULL);
     gHashSet_dtor(h);
 }
 
@@ -120,6 +121,8 @@ TEST(automatic, general)
         check[key] = val;
         gHashSet_insert(h, key, val);
     }
+
+    gHashSet_statistics(h, NULL);
 
     for (size_t i = 0; i < 300; ++i) {
         size_t pos = rnd() % check.size();

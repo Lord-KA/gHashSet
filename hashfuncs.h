@@ -31,46 +31,17 @@ size_t hash_rol(size_t hash, char data)
 size_t hash_rol_asm(size_t hash, char data)
 {
     __asm__ __volatile__ (".intel_syntax noprefix;"
-        "mov rax, %0;"
-        "mov rbx, %1;"
-        "rol rax, 1;"
-        "add rax, rbx;"
-        "mov %0, rax;"
+        "rol rbx, 1;"
+        "add rbx, rcx;"
         ".att_syntax prefix;"
-        : "=r" (hash)
-        : "r" (hash), "b" (data)
-        // : "rax", "rbx"
+        : "=b" (hash)
+        : "b" (hash), "c" (data)
     );
     return hash;
 }
-/*
-size_t hash_sum_asm(size_t hash, char data)
-{
-    size_t sum = 0;
-    char s = '1';
-    __asm__ __volatile__ (".intel_syntax noprefix;"
-            "push %1;"
-            "mov ecx, 32;"
-            "xor eax, eax;"
-            "lop%=:"
-            "cmp ecx, 0;"
-            "je end%=;"
-            "add eax, [%1];"
-            "inc %1;"
-            "dec ecx;"
-            "jmp lop%=;"
-            "end%=:"
-            "mov %0, eax;"
-            "pop %1;"
-            ".att_syntax prefix;"
-            : "=r" (sum)
-            : "r" (s)
-            : "ecx", "eax");
-    return sum;
-}
-*/
+
 size_t hash_crc32(size_t hash, char data)
 {
-    // return _mm_crc32_u8(hash, (uint8_t)(data));
+    return _mm_crc32_u8(hash, (uint8_t)(data));
 }
 

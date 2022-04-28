@@ -29,16 +29,17 @@ int main()
     gHashSet *h = &hashset;
 
     gHashSet_ctor(h, CAPACITY, NULL);
-    FILE *inp = fopen("../War-And-Peace.txt", "r");
+    FILE *inp = fopen("../texts/War-And-Peace.txt", "r");
+    assert(inp);
 
     size_t len = (MAX_KEY_LEN / 10 + rand() % 60) % MAX_KEY_LEN;
     size_t new_len = len;
     size_t status = len;
     while (status == len) {
         len = new_len;
-        char key[MAX_KEY_LEN] = {};
-        status = fread(key, sizeof(char), len, inp);
-        gHashSet_insert(h, key, NULL);
+        struct aligned buf = {};
+        status = fread(buf.data, sizeof(char), len, inp);
+        gHashSet_insert(h, buf.data, NULL);
         new_len = (MAX_KEY_LEN / 10 + rand() % 60) % MAX_KEY_LEN;
     }
 
@@ -50,13 +51,16 @@ int main()
     clock_t time = clock();
 
     for (size_t i = 0; i < SEARCHES; ++i) {
-        char key[MAX_KEY_LEN] = {};
+        struct aligned buf = {};
+        char *res = NULL;
         size_t len = MAX_KEY_LEN / 2 + rand() % 10;
         for (size_t j = 0; j < len; ++j)
-            key[j] = rand() % 100 + 48;
-        for (size_t j = 0; j < ATTEMPTS; ++j)
-            value = FIND(h, key);
-        if (i % (SEARCHES / 100) == 0)
+            buf.data[j] = rand() % 100 + 48;
+        for (size_t j = 0; j < ATTEMPTS; ++j) {
+            gHashSet_find(h, buf.data, &res);
+            value = res;
+        }
+        if (i % (SEARCHES / 20) == 0)
             printf("%zu%\n", i / (SEARCHES / 100));
     }
 

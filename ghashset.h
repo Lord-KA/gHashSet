@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include <algorithm>
+
 #include <nmmintrin.h>
 #include <emmintrin.h>
 #include <immintrin.h>
@@ -13,19 +15,23 @@
 
 static const size_t MAX_KEY_LEN = 64;       // for avx512 intrin
 
-typedef struct {                            //TODO #pragma pac(push, 64)
+#pragma pack(push, 1)
+typedef struct {
     char key[MAX_KEY_LEN];
     size_t hash;
     char *value;
     char alignment[8];                      // This way sizeof(gObjPool_Node) == 128
 } gHashSet_Node;
+#pragma pack(pop)
 
 #define GLIST_TYPE gHashSet_Node
 #define GLIST_PRINTF_CODE
 
 #include "glist.h"
 
-#define GHASHSET_HASH(hash, x) hash_rol(hash, x)
+#ifndef GHASHSET_HASH
+#define GHASHSET_HASH(hash, x) hash_rol_asm(hash, x)
+#endif
 
 typedef struct {
     gList  *list;
@@ -332,18 +338,20 @@ static gHashSet_status gHashSet_statistics(gHashSet *ctx, FILE *out)
     }
 
     fprintf(stderr, "sizeof(gObjPool_Node) = %zu\n", sizeof(gObjPool_Node));
-    size_t min = -1;
-    size_t max = 0;
     size_t avg = 0;
     for (size_t i = 0; i < ctx->capacity; ++i) {
-        min = (min > data[i]) ? data[i] : min;
-        max = (max < data[i]) ? data[i] : max;
         avg += data[i];
         if (gPtrValid(out))
             fprintf(out, "%zu\n", data[i]);
     }
     avg /= ctx->capacity;
-    fprintf(stderr, "min = %zu\nmax = %zu\nagv = %zu\noverall = %zu\n", min, max, avg, cnt);
+
+    std::sort(data, data + ctx->capacity);
+    size_t min = data[0];
+    size_t max = data[ctx->capacity - 1];
+    size_t mid = data[ctx->capacity / 2];
+
+    fprintf(stderr, "min = %zu\nmax = %zu\nagv = %zu\nmid = %zu\noverall = %zu\n", min, max, avg, mid, cnt);
 
     free(data);
     return gHashSet_status_OK;
