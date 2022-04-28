@@ -1,4 +1,4 @@
-#define GHASHSET_HASH(hash, x) hash_rol_asm(hash, x)
+#define GHASHSET_HASH(hash, x) hash_len(hash, x)
 
 #include "ghashset.h"
 #include "gutils.h"

@@ -1,3 +1,6 @@
+#define GHASHSET_HASH(h, d) hash_rol_asm(h, d)
+// #define __AVX512__
+
 #include "ghashset.h"
 #include "gutils.h"
 #include "assert.h"
@@ -17,14 +20,17 @@ struct aligned {
 })
 
 
-static const size_t SEARCHES = 100;
-static const size_t ATTEMPTS = 1000;
+static const size_t SEARCHES = 10000;
+static const size_t ATTEMPTS = 10000;
 static const size_t CAPACITY = 250;
 
 volatile char *value = NULL;
 
 int main()
 {
+    #ifdef __AVX512__
+        fprintf(stderr, "AVX512 is on!\n");
+    #endif
     gHashSet hashset = {};
     gHashSet *h = &hashset;
 

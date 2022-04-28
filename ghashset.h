@@ -217,8 +217,10 @@ static gHashSet_status gHashSet_insert(gHashSet *ctx, char *key, char *value)
 
     size_t hash = 0;
     char *iter = key;
-    while (*iter != 0)
-        hash = GHASHSET_HASH(hash, *(iter++));
+    while (*iter != 0) {
+        hash = GHASHSET_HASH(hash, *iter);
+        ++iter;
+    }
     hash %= ctx->capacity;
 
     size_t lastId = -1;
@@ -249,36 +251,52 @@ inline static bool gHashSet_keyEq(char *one, char *other)
 }
 #endif
 
-volatile inline static gHashSet_status gHashSet_find(gHashSet *ctx, char *key, char **value_out)
+inline static gHashSet_status gHashSet_findId(gHashSet *ctx, char *key, size_t *id_out)
 {
     GHASHSET_SELF_CHECK(ctx);
 
     size_t hash = 0;
     char *iter = key;
-    while (*iter != 0)
-        hash = GHASHSET_HASH(hash, *(iter++));
+    while (*iter != 0) {
+        hash = GHASHSET_HASH(hash, *iter);
+        ++iter;
+    }
     hash %= ctx->capacity;
 
     if (ctx->table[hash] == -1) {
-        *value_out = NULL;
+        *id_out = -1;
         return gHashSet_status_OK;
     }
 
     size_t curId = ctx->table[hash];
     gList_Node *node = GHASHSET_NODE_BY_ID(curId);
     #ifdef __AVX512__
-    while (curId != ctx->list->zero && gHashSet_keyEq(key, node->data.key)) {
+    while (curId != ctx->list->zero && node->data.hash == hash && gHashSet_keyEq(key, node->data.key)) {
     #else
-    while (curId != ctx->list->zero && memcmp(key, node->data.key, MAX_KEY_LEN)) {
+    while (curId != ctx->list->zero && node->data.hash == hash && memcmp(key, node->data.key, MAX_KEY_LEN)) {
     #endif
         curId = node->next;
         node = GHASHSET_NODE_BY_ID(curId);
     }
 
-    if (curId == ctx->list->zero)
+    if (curId == ctx->list->zero || node->data.hash != hash)
+        *id_out = -1;
+    else
+        *id_out = curId;
+    return gHashSet_status_OK;
+}
+
+inline static gHashSet_status gHashSet_find(gHashSet *ctx, char *key, char **value_out)
+{
+    GHASHSET_SELF_CHECK(ctx);
+
+    size_t id = -1;
+    GHASHSET_IS_OK(gHashSet_findId(ctx, key, &id));
+
+    if (id == -1)
         *value_out = NULL;
     else
-        *value_out = node->data.value;
+        *value_out = GHASHSET_NODE_BY_ID(id)->data.value;
 
     return gHashSet_status_OK;
 }
@@ -287,28 +305,21 @@ static gHashSet_status gHashSet_erase(gHashSet *ctx, char *key)
 {
     GHASHSET_SELF_CHECK(ctx);
 
-    size_t hash = 0;
-    char *iter = key;
-    while (*iter != 0)
-        hash = GHASHSET_HASH(hash, *(iter++));
-    hash %= ctx->capacity;
+    size_t id = -1;
+    GHASHSET_IS_OK(gHashSet_findId(ctx, key, &id));
 
-    if (ctx->table[hash] == -1)
+    if (id == -1)
         return gHashSet_status_OK;
 
-    size_t curId = ctx->table[hash];
-    gList_Node *node = GHASHSET_NODE_BY_ID(curId);
-    while (curId != ctx->list->zero && strncmp(node->data.key, key, MAX_KEY_LEN)) {
-        curId = node->next;
-        node = GHASHSET_NODE_BY_ID(curId);
+    gList_Node *node = GHASHSET_NODE_BY_ID(id);
+    if (ctx->table[node->data.hash] == id) {
+        if (node->data.hash == GHASHSET_NODE_BY_ID(node->next)->data.hash)
+            ctx->table[node->data.hash] = node->next;
+        else
+            ctx->table[node->data.hash] = -1;
     }
 
-    if (curId == ctx->list->zero)
-        return gHashSet_status_OK;
-
-    if (ctx->table[hash] == curId)
-        ctx->table[hash] = node->next;
-    GHASHSET_LIST_OK(gList_popByNode(ctx->list, curId, NULL));
+    GHASHSET_LIST_OK(gList_popByNode(ctx->list, id, NULL));
 
     return gHashSet_status_OK;
 }

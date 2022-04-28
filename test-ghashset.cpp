@@ -1,3 +1,5 @@
+#define GHASHSET_HASH(hash, data) hash_len(hash, data)
+
 #include "ghashset.h"
 #include "gtest/gtest.h"
 
@@ -18,6 +20,13 @@ struct aligned {
     res;                                 \
 })
 
+#define ERASE(h, k) ({              \
+    struct aligned buf = {};         \
+    char *res = NULL;                 \
+    strcpy(buf.data, k);               \
+    gHashSet_erase(h, buf.data);        \
+})
+
 TEST(manual, basics)
 {
     gHashSet hashset = {};
@@ -29,11 +38,13 @@ TEST(manual, basics)
     char val3[] = "three";
     char val4[] = "four";
     char val5[] = "five";
+    char val6[] = "six";
     gHashSet_insert(h, "abc", val1);
     gHashSet_insert(h, "bca", val2);
     gHashSet_insert(h, "hello", val3);
     gHashSet_insert(h, "fuck", val4);
     gHashSet_insert(h, "abcd", val5);
+    gHashSet_insert(h, "cab", val6);
 
     char *res1 = NULL;
     char *res2 = NULL;
@@ -43,14 +54,25 @@ TEST(manual, basics)
     EXPECT_STREQ(res2, "two");
     printf("$%s$\n$%s$\n", res1, res2);
 
+    gHashSet_statistics(h, NULL);
+    gHashSet_print(h, stdout);
+    printf("abc: $%s$\n", FIND(h, "abc"));
+    printf("cab: $%s$\n", FIND(h, "cab"));
+    printf("bca: $%s$\n", FIND(h, "bca"));
+    printf("abcd: $%s$\n", FIND(h, "abcd"));
+
     res2 = FIND(h, "fuck");
     EXPECT_STREQ(res2, "four");
     printf("$%s$\n", res2);
-    gHashSet_erase(h, "bca");
+    ERASE(h, "cab");
 
     res2 = FIND(h, "abcd");
     EXPECT_STREQ(res2, "five");
     printf("$%s$\n", res2);
+    printf("abc: $%s$\n", FIND(h, "abc"));
+    printf("cab: $%s$\n", FIND(h, "cab"));
+    printf("bca: $%s$\n", FIND(h, "bca"));
+    printf("abcd: $%s$\n", FIND(h, "abcd"));
     gHashSet_print(h, stdout);
     gHashSet_statistics(h, NULL);
     gHashSet_dtor(h);
@@ -79,13 +101,6 @@ TEST(automatic, general)
         EXPECT_EQ(v1, v2);
         EXPECT_TRUE(v1 != NULL);
     }
-    for (auto it = check.begin(); it != check.end(); ++it) {
-        char *k = (char*)(it->first.c_str());
-        char *v1 = it->second;
-        char *v2 = FIND(h, k);
-        EXPECT_EQ(v1, v2);
-        EXPECT_TRUE(v1 != NULL);
-    }
 
     gHashSet_statistics(h, NULL);
 
@@ -98,18 +113,23 @@ TEST(automatic, general)
         char *v1 = it->second;
         char *v2 = FIND(h, k);
         EXPECT_EQ(v1, v2);
-        gHashSet_erase(h, k);
+        ERASE(h, k);
         v2 = FIND(h, k);
         check.erase(it);
         EXPECT_TRUE(v2 == NULL);
 
-        for (auto it = check.begin(); it != check.end(); ++it) {
-            char *k = (char*)(it->first.c_str());
-            char *v1 = it->second;
-            char *v2 = FIND(h, k);
-            EXPECT_EQ(v1, v2);
-            EXPECT_TRUE(v1 != NULL);
-        }
+        if (i % 10 == 0)
+           for (auto it = check.begin(); it != check.end(); ++it) {
+                char *k = (char*)(it->first.c_str());
+                char *v1 = it->second;
+                char *v2 = FIND(h, k);
+                EXPECT_EQ(v1, v2);
+                if (v1 != v2) {
+                    gHashSet_statistics(h, NULL);
+                    gHashSet_print(h, stdout);
+                }
+                EXPECT_TRUE(v1 != NULL);
+            }
     }
 
     for (size_t i = 0; i < 4000; ++i) {
@@ -133,7 +153,7 @@ TEST(automatic, general)
         char *v1 = it->second;
         char *v2 = FIND(h, k);
         EXPECT_EQ(v1, v2);
-        gHashSet_erase(h, k);
+        ERASE(h, k);
         v2 = FIND(h, k);
         check.erase(it);
         EXPECT_TRUE(v2 == NULL);
