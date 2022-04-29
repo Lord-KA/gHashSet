@@ -1,5 +1,18 @@
-#define GHASHSET_HASH(h, d) hash_rol_asm(h, d)
-// #define __AVX512__
+#ifdef ROL
+#define GHASHSET_HASH(hash, data) hash_rol(hash, data)
+#endif
+
+#ifdef ROL_ASM
+#define GHASHSET_HASH(hash, data) hash_rol_asm(hash, data)
+#endif
+
+#ifdef CRC32
+#define GHASHSET_HASH(hash, data) hash_crc32(hash, data)
+#endif
+
+#ifndef GHASHSET_HASH
+#define GHASHSET_HASH(hash, data) hash_crc32(hash, data)
+#endif
 
 #include "ghashset.h"
 #include "gutils.h"
@@ -30,6 +43,15 @@ int main()
 {
     #ifdef __AVX512__
         fprintf(stderr, "AVX512 is on!\n");
+    #endif
+    #ifdef ROL
+        fprintf(stderr, "ROL hash is on!\n");
+    #endif
+    #ifdef ROL_ASM
+        fprintf(stderr, "ROL_ASM hash is on!\n");
+    #endif
+    #ifdef CRC32
+        fprintf(stderr, "CRC32 hash is on!\n");
     #endif
     gHashSet hashset = {};
     gHashSet *h = &hashset;

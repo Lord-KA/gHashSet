@@ -1,4 +1,18 @@
-#define GHASHSET_HASH(hash, data) hash_len(hash, data)
+#ifdef ROL
+#define GHASHSET_HASH(hash, data) hash_rol(hash, data)
+#endif
+
+#ifdef ROL_ASM
+#define GHASHSET_HASH(hash, data) hash_rol_asm(hash, data)
+#endif
+
+#ifdef CRC32
+#define GHASHSET_HASH(hash, data) hash_crc32(hash, data)
+#endif
+
+#ifndef GHASHSET_HASH
+#define GHASHSET_HASH(hash, data) hash_crc32(hash, data)
+#endif
 
 #include "ghashset.h"
 #include "gtest/gtest.h"

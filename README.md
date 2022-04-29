@@ -7,7 +7,7 @@ HashSet data structure based on `gList` and `gObjPool`.
 
 # Testing
 ## Accuracy testing
-Limited GoogleTest framework is used to crosscheck `gHashSet` with `std::map` by filling it up with random keys and values, ejecting some of it and then refilling with new random keys. Github Actions runners with different compilation flags.
+Limited GoogleTest framework is used to crosscheck `gHashSet` with `std::map` by filling it up with random keys and values, ejecting some of it and then refilling with new random keys. Github Actions runners with different compilation flags. Overall gHashSet test coverage is 90% linewise.
 ## Benchmark
 Benchmark consists of loading HashSet with values from War And Peace novel, and 10000 searches of random keys, most of which are unsuccessful and create heavier load on `gHashSet_find`.
 Each key is searched 10000 times, so key fillup time is insignificant.
