@@ -6,7 +6,7 @@ HashSet data structure based on `gList` and `gObjPool`.
 `gObjPool` had major changes in memory representation. Now it has a basic bulk-array inside that meant to reduce memory fragmentation and guaranty mempage alignment.
 
 # Testing
-## Accuracy testing
+## Correctness testing
 Limited GoogleTest framework is used to crosscheck `gHashSet` with `std::map` by filling it up with random keys and values, ejecting some of it and then refilling with new random keys. Github Actions runners with different compilation flags. Overall gHashSet test coverage is 90% linewise.
 ## Benchmark
 Benchmark consists of loading HashSet with values from War And Peace novel, and 10000 searches of random keys, most of which are unsuccessful and create heavier load on `gHashSet_find`.
@@ -19,7 +19,7 @@ return one:
 ![Picture 1](./images/one.png)
 return ascii of last:
 ![Picture 2](./images/ascii.png)
-return sum:
+return sum (while it may seem like a pretty nice hash, in real life hashtable wouldn't be overloaded and sum would only cover a part of the table):
 ![Picture 3](./images/sum.png)
 return len:
 ![Picture 4](./images/len.png)
