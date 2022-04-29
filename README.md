@@ -19,7 +19,7 @@ return one:
 ![Picture 1](./images/one.png)
 return ascii of last:
 ![Picture 2](./images/ascii.png)
-return sum:
+return sum (while it may seem like a pretty nice hash, in real life hashtable wouldn't be overloaded and sum would only cover a part of the table):
 ![Picture 3](./images/sum.png)
 return len:
 ![Picture 4](./images/len.png)
